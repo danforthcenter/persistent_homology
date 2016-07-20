@@ -65,13 +65,14 @@ def main():
     condor.write("universe = vanilla\n")
     condor.write("notification = complete\n")
     condor.write("request_cpus = 1\n")
+    condor.write("output_dir = " + args.outdir + "\n")
     if args.group:
         # If CONDOR_GROUP was defined, define the job accounting group
         condor.write("accounting_group = " + args.group + '\n')
     condor.write("executable = " + args.exe + '\n')
-    condor.write("log = $(Cluster).$(Process).bottleneck-distance.log\n")
-    condor.write("log = $(Cluster).$(Process).bottleneck-distance.out\n")
-    condor.write("log = $(Cluster).$(Process).bottleneck-distance.error\n")
+    condor.write("log = $(output_dir)/$(Cluster).$(Process).bottleneck-distance.log\n")
+    condor.write("log = $(output_dir)/$(Cluster).$(Process).bottleneck-distance.out\n")
+    condor.write("log = $(output_dir)/$(Cluster).$(Process).bottleneck-distance.error\n")
     condor.write("\n")
 
     # Create a job for all diagram file pairs (combinations)
