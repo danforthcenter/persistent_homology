@@ -63,7 +63,6 @@ def main():
     # Create HTCondor job file
     condor = open(args.jobfile, 'w')
     condor.write("universe = vanilla\n")
-    condor.write("notification = complete\n")
     condor.write("request_cpus = 1\n")
     condor.write("output_dir = " + args.outdir + "\n")
     if args.group:
