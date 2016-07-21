@@ -81,7 +81,6 @@ def main():
         i = files[job[0]]
         j = files[job[1]]
         d = job[2]
-        print(' '.join(map(str, [i, j])))
         matrix[i][j] = float(d)
 
     np.savetxt(args.matrix, matrix, fmt="%.1e", delimiter=",")
