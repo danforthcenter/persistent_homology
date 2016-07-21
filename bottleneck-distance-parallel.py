@@ -71,8 +71,8 @@ def main():
         condor.write("accounting_group = " + args.group + '\n')
     condor.write("executable = " + args.exe + '\n')
     condor.write("log = $(output_dir)/$(Cluster).$(Process).bottleneck-distance.log\n")
-    condor.write("log = $(output_dir)/$(Cluster).$(Process).bottleneck-distance.out\n")
-    condor.write("log = $(output_dir)/$(Cluster).$(Process).bottleneck-distance.error\n")
+    condor.write("output = $(output_dir)/$(Cluster).$(Process).bottleneck-distance.out\n")
+    condor.write("error = $(output_dir)/$(Cluster).$(Process).bottleneck-distance.error\n")
     condor.write("\n")
 
     # Create a job for all diagram file pairs (combinations)
