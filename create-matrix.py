@@ -83,7 +83,7 @@ def main():
         d = job[2]
         matrix[i][j] = float(d)
 
-    np.savetxt(args.matrix, matrix, fmt="%.1e", delimiter=",")
+    np.savetxt(args.matrix, matrix, fmt="%.2e", delimiter=",")
 
 
 if __name__ == '__main__':
