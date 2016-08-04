@@ -29,19 +29,19 @@ a .txt extension. An example setup might look like:
 ```
 
 In the analysis1 directory, run the `bottleneck-distance-parallel.py` 
-script to create an HTCondor job cluster file that will queue 
-`bottleneck-distance` jobs for all pairwise combinations of diagram
-files.
+script to create HTCondor job cluster files for batches (default = 1000) 
+of `bottleneck-distance` jobs for all pairwise combinations of diagram
+files. The output also includes an HTCondor DAG workflow that can be
+used to run all job batches automatically.
 
-`bottleneck-distance-parallel.py --dir ./diagrams --jobfile bd.condor.jobs --outdir ./condor`
+`bottleneck-distance-parallel.py --dir ./diagrams --jobname analysis1 --outdir ./condor`
 
 Submit the bottleneck-distance jobs to the HTCondor queue.
 
-`condor_submit bd.condor.jobs`
+`condor_submit_dag analysis1.dag`
 
-Check on your jobs using `condor_q`. Your jobs will share a common 
-cluster ID and a separate process ID per job (e.g. 987.1, 987.2, etc.). 
-When the jobs are done, the analysis1 will look like:
+Check on your jobs using `condor_q`. When the jobs are done, the 
+analysis1 directory will look like:
 
 ```
 - analysis1
@@ -49,11 +49,11 @@ When the jobs are done, the analysis1 will look like:
   - condor
     - 987.1.bottleneck-distance.error
     - 987.1.bottleneck-distance.log
-    - 987.1.bottleneck-distance.out
+    - 987.1.0.bottleneck-distance.out
     ...
     - 987.100.bottleneck-distance.error
     - 987.100.bottleneck-distance.log
-    - 987.100.bottleneck-distance.out
+    - 987.100.99.bottleneck-distance.out
   - diagrams
     - diagram0001.txt
     - diagram0002.txt
@@ -61,6 +61,7 @@ When the jobs are done, the analysis1 will look like:
     - diagram0100.txt
 ```
 
+The third number in the .out files is the overall unique job ID.
 To create a combined distance matrix, run the `create-matrix.py` script.
 
 `create-matrix.py --diagrams ./diagrams --condor ./condor --matrix analysis1.matrix.csv`
