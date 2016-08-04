@@ -65,15 +65,15 @@ def main():
             # Is the file an HTCondor stdout file?
             if filename[-3:] == 'out':
                 # Get the process ID from the filename
-                cluster, process, label, extension = filename.split(".")
+                cluster, process, jobID, label, extension = filename.split(".")
                 # Open the file and get the distance
                 result = open(os.path.join(dirpath, filename), 'r')
                 distance = result.readline().strip()
                 distance = distance.replace("Distance: ", "")
 
                 # Convert process into a job index
-                process = int(process)
-                jobs[process].append(distance)
+                jobID = int(jobID)
+                jobs[jobID].append(distance)
 
     # Create HTCondor job file
     matrix = np.zeros((len(diagrams), len(diagrams)))
