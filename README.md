@@ -38,7 +38,7 @@ used to run all job batches automatically.
 
 Submit the bottleneck-distance jobs to the HTCondor queue.
 
-`condor_submit_dag analysis1.dag`
+`condor_submit_dag -notification complete analysis1.dag`
 
 Check on your jobs using `condor_q`. When the jobs are done, the 
 analysis1 directory will look like:
