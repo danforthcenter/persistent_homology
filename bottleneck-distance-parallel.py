@@ -100,6 +100,7 @@ def main():
 
     # Create DAGman file
     dagman = open(args.jobname + '.dag', 'w')
+    dagman.write("JOB clean " + cleanfile + "\n")
 
     # Job counter
     job = 0
@@ -134,7 +135,7 @@ def main():
 
     # Add jobs in serial workflow
     for i in range(0, batches):
-        dagman.write("PARENT batch" + str(i) + " CHILD " + cleanfile + "\n")
+        dagman.write("PARENT batch" + str(i) + " CHILD clean\n")
     dagman.close()
 
 
