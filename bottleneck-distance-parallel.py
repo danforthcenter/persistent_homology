@@ -133,7 +133,7 @@ def main():
         dagman.write("JOB batch" + str(batch) + " " + fname + "\n")
 
     # Add jobs in serial workflow
-    for i in range(0, batches - 1):
+    for i in range(0, batches):
         dagman.write("PARENT batch" + str(i) + " CHILD " + cleanfile + "\n")
     dagman.close()
 
