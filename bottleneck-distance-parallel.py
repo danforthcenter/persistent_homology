@@ -140,6 +140,7 @@ def main():
 
 def create_jobfile(jobfile, outdir, exe, arguments, group=None):
     jobfile.write("universe = vanilla\n")
+    jobfile.write("getenv = true\n")
     jobfile.write("request_cpus = 1\n")
     jobfile.write("output_dir = " + outdir + "\n")
     if group:
