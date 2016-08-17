@@ -41,8 +41,12 @@ def main():
     # Open batch file
     batch = open(args.batchfile, 'r')
     for job in batch:
-        output = subprocess.check_output(job)
-        print(output)
+        job = job.rstrip("\n")
+        exe, diagram1, diagram2 = job.split(" ")
+        output = subprocess.check_output([exe, diagram1, diagram2])
+        output = output.rstrip("\n")
+        label, distance = output.split(" ")
+        print('\t'.join(map(str, [diagram1, diagram2, distance])))
 
 
 if __name__ == '__main__':
