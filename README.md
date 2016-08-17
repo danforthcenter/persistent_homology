@@ -34,7 +34,7 @@ of `bottleneck-distance` jobs for all pairwise combinations of diagram
 files. The output also includes an HTCondor DAG workflow that can be
 used to run all job batches automatically.
 
-`bottleneck-distance-parallel.py --dir ./diagrams --jobname analysis1 --outdir ./condor`
+`bottleneck-distance-parallel.py --dir ./diagrams --jobname analysis1 --outdir ./condor --numjobs 1000`
 
 Submit the bottleneck-distance jobs to the HTCondor queue.
 
