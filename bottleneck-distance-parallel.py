@@ -2,6 +2,7 @@
 
 import argparse
 import os
+import sys
 from math import ceil
 
 
@@ -15,9 +16,11 @@ def options():
     Raises:
         IOError: if dir does not exist.
         IOError: if the program bottleneck-distance does not exist.
+        IOError: if the program run-bottleneck-distance.py does not exist.
+        IOError: if the program bottleneck-distance-condor-cleanup.py does not exist.
     """
 
-    parser = argparse.ArgumentParser(description="Run bottleneck-distance in parallel using HTCondor",
+    parser = argparse.ArgumentParser(description="Create bottleneck-distance jobs for HTCondor",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("-d", "--dir", help="Input directory containing diagram files.", required=True)
     parser.add_argument("-j", "--jobname", help='HTCondor job name. This will be the prefix of multiple output files',
@@ -34,7 +37,7 @@ def options():
     # If the program bottleneck-distance cannot be found in PATH, stop
     args.exe = os.popen("which bottleneck-distance").read().strip()
     if len(args.exe) == 0:
-        raise IOError("The executable bottleneck-distance could not be found")
+        raise IOError("The executable bottleneck-distance could not be found.")
 
     # Convert the output directory to an absolute path
     args.outdir = os.path.abspath(args.outdir)
@@ -42,6 +45,21 @@ def options():
     # If the output directory does not exist, make it
     if not os.path.exists(args.outdir):
         os.mkdir(args.outdir)
+
+    # Find the script run-bottleneck-distance.py or stop
+    repo_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
+    run_script = os.path.join(repo_dir, 'run-bottleneck-distance.py')
+    if not os.path.exists(run_script):
+        raise IOError("The program run-bottleneck-distance.py could not be found.")
+    else:
+        args.script = run_script
+
+    # Find the script bottleneck-distance-condor-cleanup.py or stop
+    clean_script = os.path.join(repo_dir, 'bottleneck-distance-condor-cleanup.py')
+    if not os.path.exists(clean_script):
+        raise IOError("The program bottleneck-distance-condor-cleanup.py could not be found.")
+    else:
+        args.clean = clean_script
 
     # Get the value of the CONDOR_GROUP environmental variable, if defined
     args.group = os.getenv('CONDOR_GROUP')
@@ -52,6 +70,13 @@ def options():
 def main():
     # Parse flags
     args = options()
+
+    # Create cleanup script condor job file
+    cleanfile = args.jobname + ".cleanup.condor"
+    clean = open(cleanfile, "w")
+    cleanargs = "--dir " + args.outdir + " --outfile " + args.jobname + ".bottleneck-distance.results.txt"
+    create_jobfile(clean, args.outdir, args.clean, cleanargs, args.group)
+    clean.close()
 
     # Collect diagram filenames
     diagrams = []
@@ -71,7 +96,7 @@ def main():
     for i in range(0, len(diagrams)):
         # Create a job with all the remaining diagram files
         for j in range(i + 1, len(diagrams)):
-            jobs.append("arguments = " + diagrams[i] + " " + diagrams[j])
+            jobs.append(args.exe + " " + diagrams[i] + " " + diagrams[j])
 
     # Create DAGman file
     dagman = open(args.jobname + '.dag', 'w')
@@ -84,31 +109,36 @@ def main():
 
     for batch in range(0, batches):
         # Create job batch file
+        bname = args.jobname + ".batch." + str(batch) + ".txt"
+        batchfile = open(bname, "w")
+
+        # Create condor job file
         fname = args.jobname + ".batch." + str(batch) + ".condor"
         jobfile = open(fname, "w")
 
+        jobargs = "--batchfile " + bname
+
         # Initialize jobfile with basic condor configuration
-        init_jobfile(jobfile, args.outdir, args.exe, args.group)
+        create_jobfile(jobfile, args.outdir, args.script, jobargs, args.group)
+
+        jobfile.close()
 
         for j in range(job, job + args.numjobs):
             if j == len(jobs):
                 break
-            jobfile.write("output = $(output_dir)/$(Cluster).$(Process)." + str(j) + ".bottleneck-distance.out\n")
-            jobfile.write(jobs[j] + "\n")
-            jobfile.write("queue\n\n")
+            batchfile.write(jobs[j] + "\n")
         job += args.numjobs
-        jobfile.close()
 
         # Add job batch file to the DAGman file
         dagman.write("JOB batch" + str(batch) + " " + fname + "\n")
 
     # Add jobs in serial workflow
     for i in range(0, batches - 1):
-        dagman.write("PARENT batch" + str(i) + " CHILD batch" + str(i + 1) + "\n")
+        dagman.write("PARENT batch" + str(i) + " CHILD " + cleanfile + "\n")
     dagman.close()
 
 
-def init_jobfile(jobfile, outdir, exe, group=None):
+def create_jobfile(jobfile, outdir, exe, arguments, group=None):
     jobfile.write("universe = vanilla\n")
     jobfile.write("request_cpus = 1\n")
     jobfile.write("output_dir = " + outdir + "\n")
@@ -116,9 +146,11 @@ def init_jobfile(jobfile, outdir, exe, group=None):
         # If CONDOR_GROUP was defined, define the job accounting group
         jobfile.write("accounting_group = " + group + '\n')
     jobfile.write("executable = " + exe + '\n')
+    jobfile.write("arguments = " + arguments + '\n')
     jobfile.write("log = $(output_dir)/$(Cluster).$(Process).bottleneck-distance.log\n")
     jobfile.write("error = $(output_dir)/$(Cluster).$(Process).bottleneck-distance.error\n")
-    jobfile.write("\n")
+    jobfile.write("output = $(output_dir)/$(Cluster).$(Process).bottleneck-distance.out\n")
+    jobfile.write("queue\n")
 
 
 if __name__ == '__main__':
