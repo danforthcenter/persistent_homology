@@ -41,7 +41,7 @@ def main():
         for filename in filenames:
             # Is the file a *.out file?
             if filename[-3:] == 'out':
-                results = open(filename, 'r')
+                results = open(os.path.join(dirpath, filename), 'r')
                 out.write(results.read())
                 results.close()
     out.close()
