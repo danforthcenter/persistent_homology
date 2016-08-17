@@ -40,28 +40,12 @@ Submit the bottleneck-distance jobs to the HTCondor queue.
 
 `condor_submit_dag -notification complete analysis1.dag`
 
-Check on your jobs using `condor_q`. When the jobs are done, the 
-analysis1 directory will look like:
+Check on your jobs using `condor_q`.
 
-```
-- analysis1
-  - bd.condor.jobs
-  - condor
-    - 987.1.bottleneck-distance.error
-    - 987.1.bottleneck-distance.log
-    - 987.1.0.bottleneck-distance.out
-    ...
-    - 987.100.bottleneck-distance.error
-    - 987.100.bottleneck-distance.log
-    - 987.100.99.bottleneck-distance.out
-  - diagrams
-    - diagram0001.txt
-    - diagram0002.txt
-    ...
-    - diagram0100.txt
-```
-
-The third number in the .out files is the overall unique job ID.
-To create a combined distance matrix, run the `create-matrix.py` script.
-
-`create-matrix.py --diagrams ./diagrams --condor ./condor --matrix analysis1.matrix.csv`
+The DAG workflow will run an instance of `run-bottleneck-distance.py` 
+for each batch, in parallel. Once all `run-bottleneck-distance.py` jobs
+are complete, DAG will run a single 
+`bottleneck-distance-condor-cleanup.py` job to pool all the batch 
+results together into a single output. Finally, DAG will run a single
+`create-matrix.py` job to read the combined results file and output the
+final distance matrix.

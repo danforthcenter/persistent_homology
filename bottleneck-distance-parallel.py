@@ -18,6 +18,7 @@ def options():
         IOError: if the program bottleneck-distance does not exist.
         IOError: if the program run-bottleneck-distance.py does not exist.
         IOError: if the program bottleneck-distance-condor-cleanup.py does not exist.
+        IOError: if the program create-matrix.py does not exist.
     """
 
     parser = argparse.ArgumentParser(description="Create bottleneck-distance jobs for HTCondor",
@@ -61,6 +62,13 @@ def options():
     else:
         args.clean = clean_script
 
+    # Find the script create-matrix.py or stop
+    matrix_script = os.path.join(repo_dir, 'create-matrix.py')
+    if not os.path.exists(matrix_script):
+        raise IOError("The program create-matrix.py could not be found.")
+    else:
+        args.matrix = matrix_script
+
     # Get the value of the CONDOR_GROUP environmental variable, if defined
     args.group = os.getenv('CONDOR_GROUP')
 
@@ -77,6 +85,14 @@ def main():
     cleanargs = "--dir " + args.outdir + " --outfile " + args.jobname + ".bottleneck-distance.results.txt"
     create_jobfile(clean, args.outdir, args.clean, cleanargs, args.group)
     clean.close()
+
+    # Create matrix script condor job file
+    matrixfile = args.jobname + ".matrix.condor"
+    matrix = open(matrixfile, "w")
+    matrixargs = "--file " + args.jobname + ".bottleneck-distance.results.txt " + \
+                 "--matrix " + args.jobname + ".matrix.csv"
+    create_jobfile(matrix, args.outdir, args.matrix, matrixargs, args.group)
+    matrix.close()
 
     # Collect diagram filenames
     diagrams = []
@@ -101,6 +117,7 @@ def main():
     # Create DAGman file
     dagman = open(args.jobname + '.dag', 'w')
     dagman.write("JOB clean " + cleanfile + "\n")
+    dagman.write("JOB matrix " + matrixfile + "\n")
 
     # Job counter
     job = 0
@@ -136,6 +153,7 @@ def main():
     # Add jobs in serial workflow
     for i in range(0, batches):
         dagman.write("PARENT batch" + str(i) + " CHILD clean\n")
+    dagman.write("PARENT clean CHILD matrix\n")
     dagman.close()
 
 
