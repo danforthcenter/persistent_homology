@@ -123,7 +123,7 @@ def main():
     job = 0
 
     # Number of batches
-    batches = int(ceil(len(jobs) / args.numjobs))
+    batches = int(ceil(len(jobs) / float(args.numjobs)))
 
     for batch in range(0, batches):
         # Create job batch file
