@@ -48,9 +48,20 @@ def main():
         # Get the file names of diagrams 1 and 2
         d1 = os.path.basename(diagram1)
         d2 = os.path.basename(diagram2)
+
         # Extract the diagram number out of the filenames
-        n1 = int(d1[7:-4])
-        n2 = int(d2[7:-4])
+        # Remove extension
+        d1 = d1[:-4]
+        d2 = d2[:-4]
+
+        # Split on the word diagram
+        parts1 = d1.split("diagram")
+        parts2 = d2.split("diagram")
+
+        # The numbers should be the last element
+        n1 = int(parts1[-1])
+        n2 = int(parts2[-1])
+
         # Store the diagram numbers in the dictionary
         diagrams[n1] = 1
         diagrams[n2] = 1
