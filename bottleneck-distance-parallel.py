@@ -94,6 +94,12 @@ def main():
     create_jobfile(matrix, args.outdir, args.matrix, matrixargs, args.group)
     matrix.close()
 
+    # Create a bottleneck-distance condor job template file
+    condor_file = args.jobname + ".bottleneck-distance.condor"
+    template = open(condor_file, "w")
+    create_jobfile(template, args.outdir, args.exe, "$(job_args)", args.group)
+    template.close()
+
     # Collect diagram filenames
     diagrams = []
 
@@ -112,7 +118,7 @@ def main():
     for i in range(0, len(diagrams)):
         # Create a job with all the remaining diagram files
         for j in range(i + 1, len(diagrams)):
-            jobs.append(args.exe + " " + diagrams[i] + " " + diagrams[j])
+            jobs.append(diagrams[i] + " " + diagrams[j])
 
     # Create DAGman file
     dagman = open(args.jobname + '.dag', 'w')
@@ -120,39 +126,15 @@ def main():
     dagman.write("JOB matrix " + matrixfile + "\n")
 
     # Job counter
-    job = 0
+    job_num = 0
 
-    # Number of batches
-    batches = int(ceil(len(jobs) / float(args.numjobs)))
-
-    for batch in range(0, batches):
-        # Create job batch file
-        bname = args.jobname + ".batch." + str(batch) + ".txt"
-        batchfile = open(bname, "w")
-
-        # Create condor job file
-        fname = args.jobname + ".batch." + str(batch) + ".condor"
-        jobfile = open(fname, "w")
-
-        jobargs = "--batchfile " + bname
-
-        # Initialize jobfile with basic condor configuration
-        create_jobfile(jobfile, args.outdir, args.script, jobargs, args.group)
-
-        jobfile.close()
-
-        for j in range(job, job + args.numjobs):
-            if j == len(jobs):
-                break
-            batchfile.write(jobs[j] + "\n")
-        job += args.numjobs
-
-        # Add job batch file to the DAGman file
-        dagman.write("JOB batch" + str(batch) + " " + fname + "\n")
-
-    # Add jobs in serial workflow
-    for i in range(0, batches):
-        dagman.write("PARENT batch" + str(i) + " CHILD clean\n")
+    for job in jobs:
+        job_num += 1
+        # Add job to the DAGman file
+        job_name = "job" + str(job_num)
+        dagman.write("JOB " + job_name + " " + condor_file + "\n")
+        dagman.write("VARS " + job_name + ' job_args="' + job + '"\n')
+        dagman.write("PARENT " + job_name + " CHILD clean\n")
     dagman.write("PARENT clean CHILD matrix\n")
     dagman.close()
 
