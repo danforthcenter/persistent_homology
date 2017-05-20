@@ -3,7 +3,6 @@
 import argparse
 import os
 import sys
-from math import ceil
 
 
 def options():
@@ -97,7 +96,7 @@ def main():
     # Create a bottleneck-distance condor job template file
     condor_file = args.jobname + ".bottleneck-distance.condor"
     template = open(condor_file, "w")
-    create_jobfile(template, args.outdir, args.exe, "$(job_args)", args.group)
+    create_jobfile(template, args.outdir, args.script, "$(job_args)", args.group)
     template.close()
 
     # Collect diagram filenames
@@ -118,7 +117,7 @@ def main():
     for i in range(0, len(diagrams)):
         # Create a job with all the remaining diagram files
         for j in range(i + 1, len(diagrams)):
-            jobs.append(diagrams[i] + " " + diagrams[j])
+            jobs.append(" ".join(map(str, ["--exe", args.exe, "--diagram1", diagrams[i], "--diagram2", diagrams[j]])))
 
     # Create DAGman file
     dagman = open(args.jobname + '.dag', 'w')

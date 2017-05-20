@@ -13,23 +13,24 @@ def options():
     Returns:
         argparse object.
     Raises:
-        IOError: if dir does not exist.
-        IOError: if the program bottleneck-distance does not exist.
+        IOError: if the file diagram1 does not exist.
+        IOError: if the file diagram2 does not exist.
     """
 
     parser = argparse.ArgumentParser(description="Run bottleneck-distance in parallel using HTCondor",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("-b", "--batchfile", help="Bottleneck-distance job batch file.", required=True)
+    parser.add_argument("--exe", help="Fully-qualified path to the bottleneck-distance executable.", required=True)
+    parser.add_argument("--diagram1", help="Filename of the first diagram file.", required=True)
+    parser.add_argument("--diagram2", help="Filename of the second diagram file.", required=True)
     args = parser.parse_args()
 
-    # If the input file of bottleneck-distance jobs does not exist, stop
-    if not os.path.exists(args.batchfile):
-        raise IOError("File does not exist: {0}".format(args.batchfile))
+    # If the input file diagram1 does not exist, stop
+    if not os.path.exists(args.diagram1):
+        raise IOError("File does not exist: {0}".format(args.diagram1))
 
-    # If the program bottleneck-distance cannot be found in PATH, stop
-    args.exe = os.popen("which bottleneck-distance").read().strip()
-    if len(args.exe) == 0:
-        raise IOError("The executable bottleneck-distance could not be found")
+    # If the input file diagram2 does not exist, stop
+    if not os.path.exists(args.diagram2):
+        raise IOError("File does not exist: {0}".format(args.diagram2))
 
     return args
 
@@ -38,15 +39,10 @@ def main():
     # Parse flags
     args = options()
 
-    # Open batch file
-    batch = open(args.batchfile, 'r')
-    for job in batch:
-        job = job.rstrip("\n")
-        exe, diagram1, diagram2 = job.split(" ")
-        output = subprocess.check_output([exe, diagram1, diagram2])
-        output = output.rstrip("\n")
-        label, distance = output.split(" ")
-        print('\t'.join(map(str, [diagram1, diagram2, distance])))
+    output = subprocess.check_output([args.exe, args.diagram1, args.diagram2])
+    output = output.rstrip("\n")
+    label, distance = output.split(" ")
+    print('\t'.join(map(str, [args.diagram1, args.diagram2, distance])))
 
 
 if __name__ == '__main__':
