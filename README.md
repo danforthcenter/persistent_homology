@@ -29,12 +29,12 @@ a .txt extension. An example setup might look like:
 ```
 
 In the analysis1 directory, run the `bottleneck-distance-parallel.py` 
-script to create HTCondor job cluster files for batches (default = 1000) 
+script to create HTCondor DAG and job cluster files for batches (default = 100) 
 of `bottleneck-distance` jobs for all pairwise combinations of diagram
 files. The output also includes an HTCondor DAG workflow that can be
 used to run all job batches automatically.
 
-`bottleneck-distance-parallel.py --dir ./diagrams --jobname analysis1 --outdir ./condor --numjobs 1000`
+`bottleneck-distance-parallel.py --dir ./diagrams --jobname analysis1 --outdir ./condor --numjobs 100`
 
 Submit the bottleneck-distance jobs to the HTCondor queue.
 
