@@ -3,6 +3,7 @@
 import argparse
 import os
 import sys
+from math import ceil
 
 
 def options():
@@ -27,7 +28,7 @@ def options():
                         required=True)
     parser.add_argument("-o", "--outdir", help="Output directory. Directory will be created if it does not exist.",
                         default=".")
-    parser.add_argument("-n", "--numjobs", help="The number of jobs per batch.", default=1000, type=int)
+    parser.add_argument("-n", "--numjobs", help="The number of jobs per batch.", default=100, type=int)
     args = parser.parse_args()
 
     # If the input directory of diagram files does not exist, stop
@@ -83,6 +84,7 @@ def main():
     clean = open(cleanfile, "w")
     cleanargs = "--dir " + args.outdir + " --outfile " + args.jobname + ".bottleneck-distance.results.txt"
     create_jobfile(clean, args.outdir, args.clean, cleanargs, args.group)
+    clean.write("queue\n")
     clean.close()
 
     # Create matrix script condor job file
@@ -91,6 +93,7 @@ def main():
     matrixargs = "--file " + args.jobname + ".bottleneck-distance.results.txt " + \
                  "--matrix " + args.jobname + ".matrix.csv"
     create_jobfile(matrix, args.outdir, args.matrix, matrixargs, args.group)
+    matrix.write("queue\n")
     matrix.close()
 
     # Create a bottleneck-distance condor job template file
@@ -127,13 +130,26 @@ def main():
     # Job counter
     job_num = 0
 
-    for job in jobs:
-        job_num += 1
-        # Add job to the DAGman file
-        job_name = "job" + str(job_num)
-        dagman.write("JOB " + job_name + " " + condor_file + "\n")
-        dagman.write("VARS " + job_name + ' job_args="' + job + '"\n')
-        dagman.write("PARENT " + job_name + " CHILD clean\n")
+    # Number of batches
+    batches = int(ceil(len(jobs) / float(args.numjobs)))
+
+    for batch in range(0, batches):
+        # Create job batch (cluster) file
+        bname = args.jobname + ".batch." + str(batch) + ".condor"
+        batchfile = open(bname, "w")
+        # Initialize batch condor file
+        create_jobfile(batchfile, args.outdir, args.script, "$(job_args)", args.group)
+
+        for job in range(job_num, job_num + args.numjobs):
+            if job == len(jobs):
+                break
+            batchfile.write("job_args = " + jobs[job] + "\n")
+            batchfile.write("queue\n")
+        job_num += args.numjobs
+
+        # Add job batch file to the DAGman file
+        dagman.write("JOB batch" + str(batch) + " " + bname + "\n")
+        dagman.write("PARENT batch" + str(batch) + " CHILD clean\n")
     dagman.write("PARENT clean CHILD matrix\n")
     dagman.close()
 
@@ -151,7 +167,7 @@ def create_jobfile(jobfile, outdir, exe, arguments, group=None):
     jobfile.write("log = $(output_dir)/$(Cluster).$(Process).bottleneck-distance.log\n")
     jobfile.write("error = $(output_dir)/$(Cluster).$(Process).bottleneck-distance.error\n")
     jobfile.write("output = $(output_dir)/$(Cluster).$(Process).bottleneck-distance.out\n")
-    jobfile.write("queue\n")
+    # jobfile.write("queue\n")
 
 
 if __name__ == '__main__':
