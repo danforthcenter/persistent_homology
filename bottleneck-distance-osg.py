@@ -82,7 +82,7 @@ def main():
         # Create a job with all the remaining diagram files
         for j in range(i + 1, len(diagrams)):
             transfers.append(",".join(map(str, [args.exe, diagrams[i], diagrams[j]])))
-            jobs.append(" ".join(map(str, os.path.basename(diagrams[i]), os.path.basename(diagrams[j]))))
+            jobs.append(" ".join(map(str, [os.path.basename(diagrams[i]), os.path.basename(diagrams[j])])))
 
     # Create DAGman file
     dagman = open(args.jobname + '.dag', 'w')
