@@ -4,11 +4,11 @@ A collection of scripts for persistent homology analysis.
 
 ## Requirements
 
-* [Python 2.7.x](https://www.python.org/)
-* [NumPy 1.7.x](http://www.numpy.org/)
-* [Argparse 1.4.x](https://pypi.python.org/pypi/argparse)
-* bottleneck-distance from [Dionysus](http://www.mrzv.org/software/dionysus/index.html)
-* [HTCondor 8.x](https://research.cs.wisc.edu/htcondor/)
+Install [Miniconda](https://docs.conda.io/en/latest/miniconda.html), then create a new environment:
+
+```bash
+conda create -n persistent-homology python=3.7 dionysus numpy scipy dask-jobqueue
+```
 
 ## Installation
 
@@ -16,11 +16,9 @@ A collection of scripts for persistent homology analysis.
 
 ## Analysis
 
-Diagram files should be stored in their own directory and must each have
-a .txt extension. An example setup might look like:
+Diagram files should be stored in their own directory. An example setup might look like:
 
 ```
-- analysis1
   - diagrams
     - diagram0001.txt
     - diagram0002.txt
@@ -28,24 +26,50 @@ a .txt extension. An example setup might look like:
     - diagram0100.txt
 ```
 
-In the analysis1 directory, run the `bottleneck-distance-parallel.py` 
-script to create HTCondor DAG and job cluster files for batches (default = 100) 
-of `bottleneck-distance` jobs for all pairwise combinations of diagram
-files. The output also includes an HTCondor DAG workflow that can be
-used to run all job batches automatically.
+A workflow script will import the diagrams into [Dionysus](https://mrzv.org/software/dionysus2/) and calculate
+all combinations of pairwise distances. The workflow script uses Dask to run the calculation jobs in the
+HTCondor cluster and aggregates the results into an output matrix file.
 
-`bottleneck-distance-parallel.py --dir ./diagrams --jobname analysis1 --outdir ./condor --numjobs 100`
+```
+usage: wf.persistence-diagram-pairwise-distance.py [-h] -d DIR -o OUTFILE
+                                                   [-m METHOD]
+                                                   [-q WASSERSTEIN_Q]
 
-Submit the bottleneck-distance jobs to the HTCondor queue.
+Calculates pairwise distances between persistence diagrams.
 
-`condor_submit_dag -notification complete analysis1.dag`
+optional arguments:
+  -h, --help                     show this help message and exit
+  -d DIR, --dir DIR              Directory containing persistance diagrams.
+  -o OUTFILE, --outfile OUTFILE  The output matrix filename.
+  -m METHOD, --method METHOD     Distance method (bottlebeck or wasserstein
+  -q WASSERSTEIN_Q, --wasserstein_q WASSERSTEIN_Q
+                                 Wasserstein q parameter (ignored by bottleneck distance)
+```
 
-Check on your jobs using `condor_q`.
+To run the workflow:
 
-The DAG workflow will run an instance of `run-bottleneck-distance.py` 
-for each batch, in parallel. Once all `run-bottleneck-distance.py` jobs
-are complete, DAG will run a single 
-`bottleneck-distance-condor-cleanup.py` job to pool all the batch 
-results together into a single output. Finally, DAG will run a single
-`create-matrix.py` job to read the combined results file and output the
-final distance matrix.
+* Log into `stargate` with a persistent session
+  * Option 1: log in using [mosh](https://mosh.org/).
+  * Option 2: run `screen` after logging in.
+  * Option 3: run `tmux` after logging in.
+* Activate the conda environment: `conda activate persistent-homology`
+* Run the workflow
+
+### Examples
+
+#### Bottleneck distance
+```bash
+wf.persistence-diagram-pairwise-distance.py -d ./diagrams -o bdist.txt
+```
+
+#### Wasserstein distance
+
+```bash
+wf.persistence-diagram-pairwise-distance.py -d ./diagrams -o 2-wdist.txt -m wasserstein
+```
+
+#### Wasserstein distance with a modified q parameter
+
+```bash
+wf.persistence-diagram-pairwise-distance.py -d ./diagrams -o 1-wdist.txt -m wasserstein -q 1
+```
