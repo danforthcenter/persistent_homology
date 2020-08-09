@@ -7,7 +7,7 @@ A collection of scripts for persistent homology analysis.
 Install [Miniconda](https://docs.conda.io/en/latest/miniconda.html), then create a new environment:
 
 ```bash
-conda create -n persistent-homology python=3.7 dionysus numpy scipy dask-jobqueue
+conda create -n persistent-homology -c conda-forge -c bioconda python=3.7 dionysus numpy scipy dask-jobqueue
 ```
 
 ## Installation
